@@ -2,7 +2,7 @@ import * as tf from '@tensorflow/tfjs';
 import { loadSuryaNamaskarModel } from "../../tensorflow/suryaNamaskarModel";
 
 let suryaModel;
-const modelURL = "/surya_model.json";
+
 
 
 export async function loadSuryaNamaskarModel() {

@@ -30,6 +30,8 @@ let flag = false;
 function Yoga() {
   const webcamRef = useRef(null);
   const canvasRef = useRef(null);
+   const speechSynthesisRef = useRef(null);
+  // const [currentSpeechUtterance, setCurrentSpeechUtterance] = useState(null);
 
   const [startingTime, setStartingTime] = useState(0);
   const [currentTime, setCurrentTime] = useState(0);
@@ -38,6 +40,19 @@ function Yoga() {
   const [currentPose, setCurrentPose] = useState("Tree");
   const [isStartPose, setIsStartPose] = useState(false);
   const [feedbackMessages, setFeedbackMessages] = useState([]);
+
+  // Auto-clear feedback after 15 seconds
+  useEffect(() => {
+    let timer;
+    if (feedbackMessages.length > 0) {
+      timer = setTimeout(() => {
+        setFeedbackMessages([]);
+      }, 10000);
+    }
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [feedbackMessages]);
 
   // Update pose time and best performance
   useEffect(() => {
@@ -55,7 +70,51 @@ function Yoga() {
     setCurrentTime(0);
     setPoseTime(0);
     setBestPerform(0);
+    setFeedbackMessages([]);
+    if (speechSynthesisRef.current) {
+      speechSynthesisRef.current.cancel();
+    }
   }, [currentPose]);
+
+  // Add this useEffect after other useEffect hooks
+useEffect(() => {
+  speechSynthesisRef.current = window.speechSynthesis;
+  return () => {
+    if (speechSynthesisRef.current) {
+      speechSynthesisRef.current.cancel();
+    }
+  };
+}, []);
+
+// Add this useEffect after the previous one
+// Add this useEffect after the previous one
+useEffect(() => {
+  if (feedbackMessages.length > 0 && speechSynthesisRef.current) {
+    // Function to recursively speak messages
+    const speakMessages = (messages) => {
+      if (messages.length === 0) return;
+
+      const currentMessage = messages[0];
+      const utterance = new SpeechSynthesisUtterance(currentMessage);
+      
+      // Adjust speech properties
+      utterance.rate = 1;
+      utterance.pitch = 1;
+
+      // Event listener to speak next message after current one finishes
+      utterance.onend = () => {
+        // Remove the first message and speak the next
+        speakMessages(messages.slice(1));
+      };
+
+      // Speak the current message
+      speechSynthesisRef.current.speak(utterance);
+    };
+
+    // Start speaking messages
+    speakMessages(feedbackMessages);
+  }
+}, [feedbackMessages]);
 
   // Class mapping for pose classification
   const CLASS_NO = {
@@ -166,6 +225,7 @@ function Yoga() {
       // Send image to backend
       const formData = new FormData();
       formData.append("image", blob, "webcam-image.png");
+      formData.append("pose", currentPose + " Pose");  // Add this line
 
       try {
         console.log("Sending image to backend...");
@@ -182,7 +242,13 @@ function Yoga() {
         console.log("Backend response:", data);
 
         // Update feedback messages
-        setFeedbackMessages(data.feedback || []);
+        // Only add new messages that are not already present
+        setFeedbackMessages(prevMessages => {
+          const newMessages = data.feedback.filter(
+            msg => !prevMessages.includes(msg)
+          );
+          return [...prevMessages, ...newMessages];
+        });
 
         // Draw skeleton and process pose classification
         const pose = await detector.estimatePoses(webcamRef.current.video);
@@ -254,6 +320,19 @@ function Yoga() {
   function stopPose() {
     setIsStartPose(false);
     clearInterval(interval);
+    if (window.speechSynthesis) {
+      window.speechSynthesis.cancel();
+    }
+    
+    // Clear feedback messages
+    setFeedbackMessages([]);
+
+     // Stop speech synthesis ///LAETSTTTT 
+  if (window.speechSynthesis) {
+    window.speechSynthesis.cancel(); // Cancel current speech
+    window.speechSynthesis.speak(new SpeechSynthesisUtterance('')); // Force stop
+  }
+  
   }
 
   // Render UI
@@ -296,7 +375,10 @@ function Yoga() {
         </div>
         <div className="feedback-container">
           {feedbackMessages.map((message, index) => (
-            <div key={index} className="feedback-message">
+            <div 
+              key={index} 
+              className="feedback-message animate-fade-out"
+            >
               {message}
             </div>
           ))}
@@ -324,4 +406,3 @@ function Yoga() {
 }
 
 export default Yoga;
-

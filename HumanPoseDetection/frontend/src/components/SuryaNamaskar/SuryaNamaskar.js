@@ -1,9 +1,9 @@
-import React, { useEffect, useRef } from 'react';
-import * as tf from '@tensorflow/tfjs';
-import * as tmPose from '@teachablemachine/pose';
-import './SuryaNamaskar.css';
+import React, { useEffect, useRef } from "react";
+import * as tf from "@tensorflow/tfjs";
+import * as tmPose from "@teachablemachine/pose";
+import "./SuryaNamaskar.css"; // ✅ CSS file in the same folder
 
-const SuryaNamaskar = () => {
+const SuryaNamaskarComponent = () => {
   const canvasRef = useRef(null);
   const labelContainerRef = useRef(null);
   const webcamRef = useRef(null);
@@ -11,9 +11,9 @@ const SuryaNamaskar = () => {
   const maxPredictionsRef = useRef(0);
 
   useEffect(() => {
-    const URL = process.env.PUBLIC_URL + '/models/surya-namaskar/';
-    const modelURL = URL + 'model.json';
-    const metadataURL = URL + 'metadata.json';
+    const URL = process.env.PUBLIC_URL + "/models/surya-namaskar/";
+    const modelURL = URL + "model.json";
+    const metadataURL = URL + "metadata.json";
 
     const init = async () => {
       try {
@@ -31,15 +31,15 @@ const SuryaNamaskar = () => {
         // Append elements to the DOM
         canvasRef.current.width = size;
         canvasRef.current.height = size;
-        labelContainerRef.current.innerHTML = ''; // Clear previous labels
+        labelContainerRef.current.innerHTML = ""; // Clear previous labels
         for (let i = 0; i < maxPredictionsRef.current; i++) {
-          labelContainerRef.current.appendChild(document.createElement('div'));
+          labelContainerRef.current.appendChild(document.createElement("div"));
         }
 
         // Start the prediction loop
         requestAnimationFrame(loop);
       } catch (error) {
-        console.error('Error initializing Surya Namaskar model:', error);
+        console.error("Error initializing Surya Namaskar model:", error);
       }
     };
 
@@ -56,7 +56,7 @@ const SuryaNamaskar = () => {
       // Display predictions
       for (let i = 0; i < maxPredictionsRef.current; i++) {
         const classPrediction =
-          prediction[i].className + ': ' + prediction[i].probability.toFixed(2);
+          prediction[i].className + ": " + prediction[i].probability.toFixed(2);
         labelContainerRef.current.childNodes[i].innerHTML = classPrediction;
       }
 
@@ -65,7 +65,7 @@ const SuryaNamaskar = () => {
     };
 
     const drawPose = (pose) => {
-      const ctx = canvasRef.current.getContext('2d');
+      const ctx = canvasRef.current.getContext("2d");
       ctx.clearRect(0, 0, canvasRef.current.width, canvasRef.current.height);
       ctx.drawImage(webcamRef.current.canvas, 0, 0);
 
@@ -95,4 +95,4 @@ const SuryaNamaskar = () => {
   );
 };
 
-export default SuryaNamaskar;
+export default SuryaNamaskarComponent;
